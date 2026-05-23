@@ -10,6 +10,7 @@ _test_engine = create_async_engine(f"sqlite+aiosqlite:///{_TEST_DB}")
 _TestSession = async_sessionmaker(_test_engine, expire_on_commit=False)
 
 database.engine = _test_engine
+database.AsyncSessionLocal = _TestSession
 
 import pytest
 from fastapi.testclient import TestClient

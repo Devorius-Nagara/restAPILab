@@ -1,6 +1,6 @@
 import asyncio
 
-# Patch connect/close BEFORE importing main so lifespan doesn't touch real Mongo
+# Patch connect/close/get_database BEFORE importing main
 import database
 
 async def _noop():
@@ -15,17 +15,21 @@ from mongomock_motor import AsyncMongoMockClient
 _test_client = AsyncMongoMockClient()
 _test_db = _test_client["test_library"]
 
+
+async def _get_test_database():
+    return _test_db
+
+
+# Patch the module-level function so _seed() in main.py uses the test DB
+database.get_database = _get_test_database
+
 import pytest
 from fastapi.testclient import TestClient
 from main import app
 from database import get_database
 
 
-async def _override_get_database():
-    return _test_db
-
-
-app.dependency_overrides[get_database] = _override_get_database
+app.dependency_overrides[get_database] = _get_test_database
 
 
 @pytest.fixture(scope="session", autouse=True)
